@@ -1,17 +1,48 @@
 import React, { Component } from 'react';
 import './App.css';
+import cls from './App.module.css';
 import Radium, { StyleRoot } from 'radium';
-import Person from './Person/Person';
+import Person from '../components/Persons/Person';
+import Cockpit from '../components/Cockpit/Cockpit'
+import withClass from '../hoc/withClass';
+import Aux from '../hoc/Auxiliary';
+import AuthContext from '../context/auth-context';
 
 class App extends Component {
+ constructor(props)
+ {
+   super(props);
+   console.log("App constructor called");
+ }
+
+ static getDerivedStateFromProps(props, state)
+ {
+  console.log("App getDrivedStateFromProps called");
+  return state;
+ }
+
+
+ static componentDidMount()
+ {
+  console.log("App componentDidMount called");
+ 
+ }
+ componentWillUnmount()
+ {
+  console.log("App componentWillUnmount called");
+ }
+
   state = {
     persons: [
-      { id: 'asfa1', name: 'Max', age: 28 },
+      { id: 'asfa1', name: 'Max', age: 30 },
       { id: 'vasdf1', name: 'Manu', age: 29 },
       { id: 'asdf11', name: 'Stephanie', age: 26 }
     ],
     otherState: 'some other value',
-    showPersons: false
+    showPersons: false,
+    counter:0,
+    showCockpit:true,
+    auth: false
   }
 
   nameChangedHandler = ( event, id ) => {
@@ -30,7 +61,7 @@ class App extends Component {
     const persons = [...this.state.persons];
     persons[personIndex] = person;
 
-    this.setState( { persons: persons } );
+    this.setState( { persons: persons,counter:this.state.counter+1 } );
   }
 
   deletePersonHandler = ( personIndex ) => {
@@ -44,8 +75,11 @@ class App extends Component {
     const doesShow = this.state.showPersons;
     this.setState( { showPersons: !doesShow } );
   }
-
+  loginHandler=()=>{
+    this.setState({auth : true})
+  }
   render () {
+    console.log("App render method  called");
     const style = {
       backgroundColor: 'green',
       color: 'white',
@@ -64,14 +98,11 @@ class App extends Component {
     if ( this.state.showPersons ) {
       persons = (
         <div>
-          {this.state.persons.map( ( person, index ) => {
-            return <Person
-              click={() => this.deletePersonHandler( index )}
-              name={person.name}
-              age={person.age}
-              key={person.id}
-              changed={( event ) => this.nameChangedHandler( event, person.id )} />
-          } )}
+          <Person persons={this.state.persons}
+          clicked={this.deletePersonHandler}
+          changed={this.nameChangedHandler}
+          isAuthenticated={this.state.auth}
+          />
         </div>
       );
 
@@ -92,18 +123,23 @@ class App extends Component {
 
     return (
       <StyleRoot>
-        <div className="App">
-          <h1>Hi, I'm a React App</h1>
-          <p className={classes.join( ' ' )}>This is really working!</p>
-          <button
-            style={style}
-            onClick={this.togglePersonsHandler}>Toggle Persons</button>
+        <Aux>
+          <button onClick={()=>{this.setState({showCockpit:false});}}>remove cockpit</button>
+          <AuthContext.Provider value={{authenticated:this.state.auth,
+          login:this.loginHandler}}>
+          {this.state.showCockpit ?<Cockpit title={this.props.title} showPersons={this.state.showPersons}
+            personLength={this.state.persons.length}
+            clicked={this.togglePersonsHandler}
+        /> :null}
           {persons}
-        </div>
+          </AuthContext.Provider>
+    
+        
+        </Aux>
       </StyleRoot>
     );
     // return React.createElement('div', {className: 'App'}, React.createElement('h1', null, 'Does this work now?'));
   }
 }
 
-export default Radium( App );
+export default withClass(Radium( App) ,cls.App);
